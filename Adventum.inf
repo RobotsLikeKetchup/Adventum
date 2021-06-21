@@ -1,0 +1,397 @@
+Constant Story "Adventum : a tale of adventure";
+Constant Headline "^A adventure created by the Super Maru Bros.^";
+
+Constant No_score;
+
+#Include "Parser";
+Attribute sharp;
+Object  LibraryMessages
+	with  before [;
+						Miscellany:
+																		if (lm_n == 44 && action_to_be == ##Take)
+										 "You can't just take EVERYTHING!";
+						 ];
+#Include "VerbLib";
+
+[Initialise;
+player.description = "Just your average, day-to-day adventurer. You do not seem to be different from last time you looked.";
+print "^^An Indie Game^^";
+location = ShipDeck;
+move RustySword to BrownSack;
+move Lantern to BrownSack;
+move woodKey to PotPlant;
+move table to house21;
+remove sharpener;
+];
+
+!Global variables
+Global trollDefeat = false;
+Global talkedtoMayor = false;
+Global vinesCut = false;
+Global talkedtosentry = false;
+
+! Main rooms
+
+object ShipDeck "Ship Deck"
+with
+description "You are on a ship's deck. It has just docked. You see a town in the distance, to the south.",
+s_to VillageGate,
+has light;
+
+object VillageGate "Village Gate"
+with
+description "You are at the gate of a small village. Enter the gate to the south. Go back to the ship to the north.",
+n_to ShipDeck,
+s_to Gate,
+has light;
+
+Object -> Gate "gate"
+with description "A gate to a small village. It has a lock.",
+name 'gate' 'door' 'entrance' ,
+when_closed "You can see a gate, on the south. The gate is closed. And locked.",
+when_open "The gate is now open. Hip-hip-hooray!",
+door_to VillageSquare,
+door_dir s_to,
+with_key woodkey,
+has static door openable lockable locked ;
+
+object VillageSquare "Village Square"
+with
+description "You are in a small village's main square. There seems to be a large amount of people gathered, with a mayor in front. North to leave the village, west to the village lane, or east to go into the forest.",
+n_to VillageGate,
+e_to Forest,
+w_to villageLane,
+has light;
+
+object Forest "Forest"
+with
+description "There is trees all around, and you can feel something sinister... go west to go back to the village, or east to move further on.",
+w_to VillageSquare,
+e_to ForestDeep;
+
+object ForestDeep "Deep Forest"
+with
+description "The sinister feeling is extremely strong here. The only way back is west. You see sharp vines in every other direction.",
+w_to Forest,
+s_to,
+n_to;
+
+object OldPathS "Old Path to the South"
+with
+description "A very old path through the forest, leading south. Go north back to the forest(to get to the village).",
+n_to ForestDeep,
+s_to cliffside,
+has light;
+
+object OldPathN "Old Path to the North"
+with
+description "An old path through the forest, though with more ferns and underbrush. You can see without another light source now... Go south to the forest near the village.",
+s_to ForestDeep,
+has light;
+
+object villageLane "Village Lane"
+with
+description "A village lane, with 4 houses, numbered 21, 22, 23, and 24. There is a large gate blocking the other houses.",
+e_to VillageSquare
+has light;
+
+object cliffside "Cliffside"
+with
+description "A cliff with a steep drop to a lava ocean, teeming with lava ocean life such as lava whales, lava fishes, and lava tigers.",
+n_to OldPathS,
+has light;
+
+! Inanimate Objects
+
+object BrownSack "brown sack"
+with description "a brown sack. Nothing much else to say...",
+name 'brown' 'sack' 'bag',
+found_in ShipDeck,
+has openable container;
+
+object RustySword "rusty sword"
+with name 'rusty' 'sword' 'dull',
+description "a rusty sword. I hope you got your tetanus shot...",
+before [;
+	Sharpen:
+		if(second == sharpener) {
+			give self sharp;
+			print "You sharpen the sword, peeling off some rust, and realize it is made of quite fine metal. Your sword seems very sharp now!";
+			rtrue;
+		};
+];
+
+object woodkey "wooden key"
+with description "a wooden key. It opens the gate to the village.",
+name 'key' 'wooden' 'wood',
+
+before[;
+if(talkedtosentry == true)
+move self to PotPlant;
+give self ~concealed;
+],
+has concealed;
+
+object PotPlant "potted plant"
+with
+name 'plant' 'potted',
+description "a small potted plant.",
+initial "A potted plant is here.",
+found_in VillageGate,
+has static container open;
+
+object GoldBox "gold box"
+with
+name 'gold' 'golden' 'box',
+description "a golden box",
+initial "A golden box is here.",
+found_in VillageGate,
+
+before[;
+open : print "A firework explodes into your face, causing you to be permanantly blinded. What a way to die!";
+deadflag = 1;
+rtrue;
+],
+
+has static container openable;
+
+object SilverBox "silver box"
+with
+name 'silver' 'box',
+description "a silver box",
+initial "A silver box is here.",
+found_in VillageGate,
+
+before[;
+open : print "A firework explodes into your face, causing you to be permanantly blinded. What a way to die!";
+deadflag = 1;
+rtrue;
+],
+
+has static container openable;
+
+object BrassBox "brass box"
+with
+name 'brass' 'box',
+description "a brass box",
+initial "A brass box is here.",
+found_in VillageGate,
+
+before[;
+open : print "A firework explodes into your face, causing you to be permanantly blinded. What a way to die!";
+deadflag = 1;
+rtrue;
+],
+
+has container openable static;
+
+object Lantern "lantern"
+  with name 'lantern' 'lamp' 'heavy' 'light',
+       describe [;
+           if (self has on)
+               "^The lantern squats on the ground, burning away.";
+           "^The lantern squats heavily on the ground.";
+       ],
+       before [;
+           Examine: print "It is a heavy lantern, ";
+               if (self hasnt on) "currently off.";
+               "blazing with brilliant yellow light.";
+           Burn: <<SwitchOn self>>;
+       ],
+       after [;
+           SwitchOn: give self light;
+           SwitchOff: give self ~light;
+       ],
+has  switchable;
+
+object vines "vines"
+with name 'vines' 'vine' 'shrub' 'plant' 'bush' 'sharp' 'obstruction',
+description "sharp vines, blocking your path.",
+found_in ForestDeep,
+before[;
+	Cut:
+		if (second == nothing) {
+			print "You can not cut vines with NOTHING!!!"; rtrue;
+		}
+		if (second has sharp) {
+			ForestDeep.n_to = OldPathN;
+			ForestDeep.s_to = OldPathS;
+			vinesCut = true;
+			print "You cut the vines, revealing two pathways to the north and south..."; rtrue;
+		}
+],
+has static pluralname;
+
+object sharpener "sharpener"
+with name 'sharpener' 'file' 'edge' 'grinder',
+description "A small sharpener, seemingly used for swords and knives.",
+found_in ForestDeep,
+has concealed;
+
+object Ruby "ruby"
+with
+name 'ruby' 'red' 'shiny' 'expensive' 'valuable' 'beautiful' 'throbbing',
+description "A beautiful ruby, seeming to be slightly throbbing.";
+
+object house21 "House number 21"
+with
+name 'cottage' 'house' '21' 'number' 'abode' 'residence' 'dwelling' 'home',
+description "A nice house, with the number 21 on it.",
+found_in villageLane,
+has enterable container scenery light openable;
+
+object table "Table"
+with
+name 'table' 'countertop' 'dining' 'breakfast' 'wood' 'wooden',
+description "A nice wooden table."
+has static container;
+
+! Animate objects
+
+Object sentry "sentry"
+with name 'tall' 'sentry' 'guard' 'guy' 'person' 'lanky',
+description "A tall sentry is standing here. He looks quite bored.",
+initial "A tall sentry is here.",
+found_in VillageGate,
+life [ word1 word2;
+
+Attack : print "Violence is not the answer in this situation.^"; rtrue ;
+Kiss : print "Hmm..no.^";rtrue;
+
+Tell , Answer , Ask :
+word1 = noun;
+word2 = second;
+if (word1==33) {word1=word2;}
+
+switch (word1) {
+'hi', 'hello', 'wassup', 'village', 'gate', 'in', 'enter', 'door', 'help', 'key', 'town', 'unlock', 'let', 'me' : "~Hello! Look. I can't let you in. But if you answer a math question for my homework, I might make an exception.~";
+'hi', 'hello', 'wassup' : "~Hi. Wait what? What are you doing here?~";
+'village', 'gate', 'in', 'enter', 'door', 'help', 'key', 'town', 'unlock', 'let', 'me' : "~Look. I can't let you in. But if you answer a math question for my homework, I might make an exception.~";
+'question', 'math', 'homework', 'enigma', 'tell', 'me', 'the', 'what', 'is' : "~Here is the question: what is the square root of one hundred?~";
+'ten', '10', '1010', 'TEN', 'Ten', '10.0' : "~Thanks! I hid the key to the gate inside the potted plant!~^";
+'solution', 'answer' : "You really think I'M gonna answer it for you?";
+default : print "You get no answer from the lanky sentry.^"; rtrue;
+}
+
+talkedtosentry = true;
+
+],
+has animate static ;
+
+Object mayor "mayor"
+with name 'stout' 'worrisome' 'mayor' 'worried' 'person' 'lady' 'woman',
+description "The stout mayor of the small town. She looks quite worried.",
+initial "The mayor of the small town is here.",
+found_in VillageSquare,
+life [ word1 word2;
+
+Attack : print "Are you okay? She is the MAYOR!^"; rtrue ;
+Kiss : print "Goodness! No...^";rtrue;
+
+Tell, Answer , Ask :
+word1 = noun;
+word2 = second;
+if (word1==33) {word1=word2;}
+
+if (trollDefeat == true) {
+	if (talkedtoMayor == true){
+		switch (word1) {
+			'yes', 'yep', 'I', 'did' :
+				"~Thank you so much! You have recieved a valuable ruby.";
+				move Ruby to player;
+			'no', 'not', 'I', 'didn^t', 'did', 'monster', 'troll' :
+				"~Stop being modest! You must have defeated this monster in some way, or you would not have that triumphant smile on your face. Take this valuable ruby we have.~";
+			default : print "The mayor seems to shrug at anything not related to the monster.^"; rtrue;
+		}
+		move Ruby to player;
+	}
+}
+
+!add fall-back if PC has not talked to mayor and has defeated the troll
+
+if (talkedtoMayor == false) {
+	switch (word1) {
+	'hi', 'hello' : "~Hello, stranger. Have you come from the ship?~";
+	'ship', 'yes', 'yep', 'come', 'definitely' : "~You must be an adventurer! Look, we have a problem. ~";
+	'hi', 'hello' : "~Hi. Wait what? What are you doing here?~";
+	'ship', 'yes', 'yep', 'come', 'definitely' : "~You must be an adventurer! Look, we have a problem.~";
+	'problem', 'what', 'is', 'the', 'dillema' :
+		"~We have a monster haunting our village. During the day, he lives in the forest. But beware! The forest is very dark, so make sure you have a lantern.~";
+	default : print "The mayor looks at you, puzzled.^"; rtrue;
+	};
+talkedtoMayor = true;
+}
+
+],
+react_before [;
+	if (trollDefeat == true) {
+		print "The mayor looks at you with a questioning look. ~Did you kill the monster?~";
+	}
+],
+has animate static;
+
+object troll "troll"
+with name 'troll' 'smelly' 'big' 'fat' 'man' 'tall' 'stupid' 'stinky' 'dumb',
+description "A fat, smelly, fat, and mean troll. Goodness me!",
+!add some sort of switch that changes game's reaction to the troll
+initial "A troll that seems to have been ~haunting~ the village is here. These villagers scare easily!",
+found_in forestDeep,
+life [;
+	Answer : "The troll never said anything that you could understand.";
+	Tell, Ask : "Do not try to talk to trolls. You never learn anything.";
+	Show, Give :
+		move noun to self;
+		"The troll takes ", (the)noun, " greedily.";
+	Attack : "I seriously would reconsider your notion of attacking an 8 foot tall, smelly, and stupid troll.";
+],
+react_before [;
+	if (parent(lantern) == player && parent(RustySword) == player) {
+		trollDefeat = true;
+		move sharpener to ForestDeep;
+		remove self;
+		print "The troll, staring at your quite rusty sword, starts screaming and his eyes open wide. ~Urrgghhh!~ You chuckle to yourself, realizing your lantern was making the sword appear to be glowing. This troll must be particularly afraid of glowing swords.";
+		print " In his hurry to leave, the troll drops a sharpener, looking to be mostly used for knives and swords.";
+	};
+],
+has animate static;
+
+! Removing 'take all'(Thanks Roger Firth!)
+[ ChooseObjects obj code
+				retval;
+				obj = obj;          ! Avoid a compiler warning
+				switch (code) {
+						0:              ! Parser is excluding obj from ALL
+								;           ! ... accept parser's decision
+						1:              ! Parser is including obj in ALL
+								if (action_to_be == ##Take) retval = 2;
+														! ... force exclusion if TAKE; accept otherwise
+						2:              ! Parser is asking for 'appropriateness' hint
+								;           ! ... but we don't provide one
+						}
+				return retval;
+				];
+
+! Functions
+
+[ YellSub;
+	if (noun == nothing) "That doesn't seem to help much with your situation.";
+	if (noun has animate) "Very suave.", (the)noun, "looks at you quizzicaly.";
+	if (noun hasnt animate) "Yelling at an object normally does not contribute to your sanity.";
+];
+
+[ SharpenSub;
+	if (second has animate) "Be nice! I am very sure that ", (the)noun, "is very sharp indeed!";
+	if (second hasnt animate) "I am not so sure you can sharpen ", (the)noun, " with ", (the)second, ".";
+	if (second has sharp) "This object is already sharpened!";
+];
+
+! Grammar
+
+Include "Grammar";
+
+Verb 'yell' 'shout' 'scream' 'hoot' 'howl' 'cheer' 'wail' 'shriek' 'squeal' 'wallow' 'yelp' 'woop' 'bawl'
+	*																		-> Yell
+	* 'at' noun 															-> Yell;
+
+Verb 'sharpen' 'hone' 'whet' 'sharp' 'grind' 'edge' 'file' 'taper' 'stroke'
+	* noun 'with'/'using' held												->Sharpen;
