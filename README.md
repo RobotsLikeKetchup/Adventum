@@ -1,5 +1,5 @@
 # Adventum
-An inform 6 text adventure exported as a .z5 file
+An inform 6 text adventure exported as a .z5 file.
 What's what:
 - Adventum.z5 is the compiled game that works on all operating systems as long as you have a z-code interpreter. For Windows, I recommend Windows Frotz, and for Mac, I recomend Yazmin.
 - The two nano.saves are just saves that I use for jumping to different spots in the story. You should ignore them.
